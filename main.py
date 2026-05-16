@@ -1,4 +1,6 @@
 import os
+import math
+import re
 import telebot
 from telebot import apihelper
 apihelper.ENABLE_MIDDLEWARE = True
@@ -15,6 +17,8 @@ import uuid as uuid_lib
 from datetime import datetime, timezone, timedelta
 from flask import Flask
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
+
+BOT_START_TIME = time.time()
 
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -58,33 +62,41 @@ def join_markup():
 # ─────────────────────────────────────────────────────────
 def main_menu_markup():
     m = InlineKeyboardMarkup(row_width=2)
+    m.add(InlineKeyboardButton("▬▬▬  📥 VIDEO DOWNLOADER  ▬▬▬", callback_data="noop"))
     m.add(
-        InlineKeyboardButton("🎵  TikTok",      callback_data="menu_tiktok"),
-        InlineKeyboardButton("📺  YouTube",     callback_data="menu_youtube"),
+        InlineKeyboardButton("🎵 TikTok",       callback_data="menu_tiktok"),
+        InlineKeyboardButton("📺 YouTube",      callback_data="menu_youtube"),
     )
     m.add(
-        InlineKeyboardButton("📸  Instagram",   callback_data="menu_instagram"),
-        InlineKeyboardButton("👤  Facebook",    callback_data="menu_facebook"),
+        InlineKeyboardButton("📸 Instagram",    callback_data="menu_instagram"),
+        InlineKeyboardButton("👤 Facebook",     callback_data="menu_facebook"),
     )
     m.add(
-        InlineKeyboardButton("🐦  Twitter/X",   callback_data="menu_twitter"),
-        InlineKeyboardButton("🎬  Pinterest",   callback_data="menu_pinterest"),
+        InlineKeyboardButton("🐦 Twitter/X",    callback_data="menu_twitter"),
+        InlineKeyboardButton("🎬 Pinterest",    callback_data="menu_pinterest"),
     )
-    m.add(InlineKeyboardButton("━━━━━━━━━━━━━━━━━━━━", callback_data="noop"))
+    m.add(InlineKeyboardButton("▬▬▬  🔧 TOOLS HUB  ▬▬▬", callback_data="noop"))
     m.add(
-        InlineKeyboardButton("💀  Hacker Tools",  callback_data="menu_hacker"),
-        InlineKeyboardButton("🛠️  Utility Tools", callback_data="menu_tools"),
+        InlineKeyboardButton("💀 Hacker Tools",   callback_data="menu_hacker"),
+        InlineKeyboardButton("🛠️ Utility Tools",  callback_data="menu_tools"),
     )
     m.add(
-        InlineKeyboardButton("🌐  Network Tools",  callback_data="menu_network"),
-        InlineKeyboardButton("🔐  Crypto Tools",   callback_data="menu_crypto"),
+        InlineKeyboardButton("🌐 Network Tools",  callback_data="menu_network"),
+        InlineKeyboardButton("🔐 Crypto Tools",   callback_data="menu_crypto"),
     )
-    m.add(InlineKeyboardButton("━━━━━━━━━━━━━━━━━━━━", callback_data="noop"))
     m.add(
-        InlineKeyboardButton("ℹ️  Help",         callback_data="menu_help"),
-        InlineKeyboardButton("👑  Admin Panel",  callback_data="menu_admin"),
+        InlineKeyboardButton("🔑 Cipher Tools",   callback_data="menu_cipher"),
+        InlineKeyboardButton("🧠 Pro Tools",      callback_data="menu_pro"),
     )
-    m.add(InlineKeyboardButton("📢  Our Channel", url=CHANNEL_TG))
+    m.add(InlineKeyboardButton("▬▬▬  ⚙️ SYSTEM  ▬▬▬", callback_data="noop"))
+    m.add(
+        InlineKeyboardButton("ℹ️ Help & Commands", callback_data="menu_help"),
+        InlineKeyboardButton("👑 Admin Panel",    callback_data="menu_admin"),
+    )
+    m.add(
+        InlineKeyboardButton("📊 Bot Stats",      callback_data="menu_botstats"),
+        InlineKeyboardButton("📢 Our Channel",    url=CHANNEL_TG),
+    )
     return m
 
 # ─────────────────────────────────────────────────────────
@@ -112,29 +124,35 @@ def start(message):
     send_welcome(message.chat.id, message.from_user.first_name)
 
 def send_welcome(chat_id, name):
-    text = (
+    caption = (
+        f"👋 *Welcome, {name}!*\n\n"
         "```\n"
-        "██╗   ██╗ ██████╗ ██╗██████╗ ██╗  ██╗\n"
-        "██║   ██║██╔═══██╗██║██╔══██╗╚██╗██╔╝\n"
-        "██║   ██║██║   ██║██║██║  ██║ ╚███╔╝ \n"
-        "╚██╗ ██╔╝██║   ██║██║██║  ██║ ██╔██╗ \n"
-        " ╚████╔╝ ╚██████╔╝██║██████╔╝██╔╝ ██╗\n"
-        "  ╚═══╝   ╚═════╝ ╚═╝╚═════╝ ╚═╝  ╚═╝\n"
+        "╔══════════════════════════════╗\n"
+        "║  💀  VOID X DOWNLOADER  💀   ║\n"
+        "║  ⚡ DARK HACKER ZONE v3.0 ⚡ ║\n"
+        f"║  👑 Owner: DEATH DREAM      ║\n"
+        "╚══════════════════════════════╝\n"
         "```\n"
-        f"👋 Welcome, *{name}*!\n\n"
-        "┌─────────────────────────────┐\n"
-        f"│  🤖  *{hk('voidxdownloder')}*  │\n"
-        "│  ⚡  POWERED BY DARK HACKER ZONE  │\n"
-        f"│  👑  Owner: *{hk(OWNER)}*  │\n"
-        "└─────────────────────────────┘\n\n"
-        "📥 *Video Downloader* — TikTok, YT, IG, FB, Twitter\n"
-        "💀 *Hacker Tools* — IP, Hash, FakeID, Phish & more\n"
-        "🛠️ *Utility Tools* — 20+ working tools\n"
-        "🌐 *Network Tools* — Ping, DNS, Port info\n"
-        "🔐 *Crypto Tools* — Prices, Convert & more\n\n"
-        "🔻 *Choose a section from the menu below* 🔻"
+        "📥 *Video Downloader* — TikTok·YT·IG·FB·Twitter\n"
+        "💀 *Hacker Tools* — IP·Hash·FakeID·Cipher\n"
+        "🛠️ *Utility Tools* — 25+ working tools\n"
+        "🌐 *Network Tools* — Ping·DNS·Port info\n"
+        "🔐 *Crypto Tools* — Live prices & converter\n"
+        "🔑 *Cipher Tools* — ROT13·Caesar·XOR·Vigenere\n"
+        "🧠 *Pro Tools* — Strength·Validator·Analyzer\n\n"
+        "🔻 *Select a section from the menu below* 🔻"
     )
-    bot.send_message(chat_id, text, parse_mode="Markdown", reply_markup=main_menu_markup())
+    banner_path = "assets/banner.png"
+    try:
+        with open(banner_path, 'rb') as img:
+            bot.send_photo(
+                chat_id, img,
+                caption=caption,
+                parse_mode="Markdown",
+                reply_markup=main_menu_markup()
+            )
+    except Exception:
+        bot.send_message(chat_id, caption, parse_mode="Markdown", reply_markup=main_menu_markup())
 
 # ─────────────────────────────────────────────────────────
 #  JOIN CHECK  CALLBACK
@@ -184,6 +202,12 @@ def cb_menu(call):
         send_help(call.message.chat.id)
     elif action == "admin":
         send_admin_panel(call.message.chat.id, call.from_user.id)
+    elif action == "cipher":
+        show_cipher_menu(call.message.chat.id)
+    elif action == "pro":
+        show_pro_menu(call.message.chat.id)
+    elif action == "botstats":
+        send_bot_stats(call.message.chat.id)
     elif action == "back":
         send_welcome(call.message.chat.id, call.from_user.first_name)
 
@@ -277,6 +301,247 @@ def cb_hacker(call):
         whoami_action(cid, call.from_user)
     elif a == "port":
         bot.send_message(cid, "📡 *Port Scanner Info*\n\nUsage: `/portscan <host>`\nExample: `/portscan google.com`", parse_mode="Markdown")
+
+# ─────────────────────────────────────────────────────────
+#  CIPHER TOOLS  MENU
+# ─────────────────────────────────────────────────────────
+def show_cipher_menu(chat_id):
+    m = InlineKeyboardMarkup(row_width=2)
+    m.add(
+        InlineKeyboardButton("🔁  ROT13",         callback_data="ci_rot13"),
+        InlineKeyboardButton("🏛️  Caesar",         callback_data="ci_caesar"),
+    )
+    m.add(
+        InlineKeyboardButton("⚡  XOR Cipher",    callback_data="ci_xor"),
+        InlineKeyboardButton("🌿  Vigenere",       callback_data="ci_vigenere"),
+    )
+    m.add(
+        InlineKeyboardButton("🔤  Atbash",         callback_data="ci_atbash"),
+        InlineKeyboardButton("💠  Base32",         callback_data="ci_base32"),
+    )
+    m.add(
+        InlineKeyboardButton("🔢  Hex Encode",     callback_data="ci_hexenc"),
+        InlineKeyboardButton("📦  URL Encode",     callback_data="ci_urlenc"),
+    )
+    m.add(InlineKeyboardButton("🏠  Back to Main Menu", callback_data="menu_back"))
+    bot.send_message(
+        chat_id,
+        "```\n"
+        "╔══════════════════════════╗\n"
+        "║  🔑  CIPHER TOOLS v2.0  ║\n"
+        "║  DARK HACKER ZONE        ║\n"
+        "╚══════════════════════════╝\n"
+        "```\n"
+        "🔐 *Encrypt & Decode anything!*\n\n"
+        "▸ ROT13 · Caesar · XOR\n"
+        "▸ Vigenere · Atbash · Base32\n"
+        "▸ Hex & URL encoding\n\n"
+        "Or use commands directly:\n"
+        "`/rot13` `/caesar` `/atbash` `/vigenere`",
+        parse_mode="Markdown",
+        reply_markup=m
+    )
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("ci_"))
+def cb_cipher(call):
+    bot.answer_callback_query(call.id)
+    a = call.data[3:]
+    cid = call.message.chat.id
+    if a == "rot13":
+        bot.send_message(cid, "🔁 *ROT13 Cipher*\n\nUsage: `/rot13 <text>`\nExample: `/rot13 hello world`\n\n_ROT13 shifts each letter by 13 positions._", parse_mode="Markdown")
+    elif a == "caesar":
+        bot.send_message(cid, "🏛️ *Caesar Cipher*\n\nUsage: `/caesar <shift> <text>`\nExample: `/caesar 3 hello`\n\n_Shifts each letter by the given number._", parse_mode="Markdown")
+    elif a == "xor":
+        bot.send_message(cid, "⚡ *XOR Cipher*\n\nUsage: `/xor <key> <text>`\nExample: `/xor 42 hello`\n\n_XOR each character with a numeric key._", parse_mode="Markdown")
+    elif a == "vigenere":
+        bot.send_message(cid, "🌿 *Vigenere Cipher*\n\nUsage: `/vigenere <key> <text>`\nExample: `/vigenere secret hello`\n\n_Polyalphabetic substitution cipher._", parse_mode="Markdown")
+    elif a == "atbash":
+        bot.send_message(cid, "🔤 *Atbash Cipher*\n\nUsage: `/atbash <text>`\nExample: `/atbash hello`\n\n_Reverses the alphabet (A↔Z, B↔Y...)_", parse_mode="Markdown")
+    elif a == "base32":
+        bot.send_message(cid, "💠 *Base32 Encode*\n\nUsage: `/base32 <text>`\nExample: `/base32 hello world`", parse_mode="Markdown")
+    elif a == "hexenc":
+        bot.send_message(cid, "🔢 *Hex Encode*\n\nUsage: `/hex <text>`\nExample: `/hex hello`", parse_mode="Markdown")
+    elif a == "urlenc":
+        bot.send_message(cid, "📦 *URL Encode*\n\nUsage: `/urlencode <text>`\nExample: `/urlencode hello world&more`", parse_mode="Markdown")
+
+# ─────────────────────────────────────────────────────────
+#  PRO TOOLS  MENU
+# ─────────────────────────────────────────────────────────
+def show_pro_menu(chat_id):
+    m = InlineKeyboardMarkup(row_width=2)
+    m.add(
+        InlineKeyboardButton("💪  Pass Strength",   callback_data="pr_strength"),
+        InlineKeyboardButton("📧  Email Validator",  callback_data="pr_email"),
+    )
+    m.add(
+        InlineKeyboardButton("📝  Text Analyzer",   callback_data="pr_textana"),
+        InlineKeyboardButton("🔢  Prime Check",     callback_data="pr_prime"),
+    )
+    m.add(
+        InlineKeyboardButton("🧮  Factorial",       callback_data="pr_factorial"),
+        InlineKeyboardButton("🎲  Random Number",   callback_data="pr_randnum"),
+    )
+    m.add(
+        InlineKeyboardButton("🌍  Country Info",    callback_data="pr_country"),
+        InlineKeyboardButton("☀️  Horoscope",       callback_data="pr_horo"),
+    )
+    m.add(
+        InlineKeyboardButton("⏱️  Bot Uptime",      callback_data="pr_uptime"),
+        InlineKeyboardButton("🖥️  System Info",     callback_data="pr_sysinfo"),
+    )
+    m.add(
+        InlineKeyboardButton("🔗  Link Checker",    callback_data="pr_linkcheck"),
+        InlineKeyboardButton("📊  Text Stats",      callback_data="pr_textstats"),
+    )
+    m.add(InlineKeyboardButton("🏠  Back to Main Menu", callback_data="menu_back"))
+    bot.send_message(
+        chat_id,
+        "```\n"
+        "╔══════════════════════════╗\n"
+        "║  🧠  PRO TOOLS PANEL     ║\n"
+        "║  Advanced Features v3.0  ║\n"
+        "╚══════════════════════════╝\n"
+        "```\n"
+        "⚡ *Professional grade tools:*\n\n"
+        "▸ Password strength analyzer\n"
+        "▸ Email & URL validator\n"
+        "▸ Text statistics & analysis\n"
+        "▸ Math tools (prime, factorial)\n"
+        "▸ Country info, Horoscope\n"
+        "▸ System & uptime info",
+        parse_mode="Markdown",
+        reply_markup=m
+    )
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("pr_"))
+def cb_pro(call):
+    bot.answer_callback_query(call.id)
+    a = call.data[3:]
+    cid = call.message.chat.id
+    if a == "strength":
+        bot.send_message(cid, "💪 *Password Strength Checker*\n\nUsage: `/strength <password>`\nExample: `/strength MyP@ss123!`", parse_mode="Markdown")
+    elif a == "email":
+        bot.send_message(cid, "📧 *Email Validator*\n\nUsage: `/email <email>`\nExample: `/email test@gmail.com`", parse_mode="Markdown")
+    elif a == "textana":
+        bot.send_message(cid, "📝 *Text Analyzer*\n\nUsage: `/analyze <text>`\nShows: words, chars, sentences, reading time!", parse_mode="Markdown")
+    elif a == "prime":
+        bot.send_message(cid, "🔢 *Prime Number Checker*\n\nUsage: `/prime <number>`\nExample: `/prime 97`", parse_mode="Markdown")
+    elif a == "factorial":
+        bot.send_message(cid, "🧮 *Factorial Calculator*\n\nUsage: `/factorial <number>`\nExample: `/factorial 10`", parse_mode="Markdown")
+    elif a == "randnum":
+        rn = random.randint(1, 1000000)
+        bot.send_message(cid, f"🎲 *Random Number (1–1,000,000):*\n\n`{rn:,}`", parse_mode="Markdown")
+    elif a == "country":
+        bot.send_message(cid, "🌍 *Country Info*\n\nUsage: `/country <name>`\nExample: `/country Pakistan`", parse_mode="Markdown")
+    elif a == "horo":
+        show_horoscope_menu(cid)
+    elif a == "uptime":
+        send_uptime(cid)
+    elif a == "sysinfo":
+        send_sysinfo(cid)
+    elif a == "linkcheck":
+        bot.send_message(cid, "🔗 *Link Checker*\n\nUsage: `/check <url>`\nExample: `/check https://google.com`\n\nChecks if URL is alive & safe!", parse_mode="Markdown")
+    elif a == "textstats":
+        bot.send_message(cid, "📊 *Text Stats*\n\nUsage: `/analyze <text>`\nExample: `/analyze Hello world this is a test`", parse_mode="Markdown")
+
+def show_horoscope_menu(chat_id):
+    signs = ["♈ Aries","♉ Taurus","♊ Gemini","♋ Cancer","♌ Leo","♍ Virgo",
+             "♎ Libra","♏ Scorpio","♐ Sagittarius","♑ Capricorn","♒ Aquarius","♓ Pisces"]
+    m = InlineKeyboardMarkup(row_width=3)
+    for s in signs:
+        m.add(InlineKeyboardButton(s, callback_data=f"horo_{s.split()[1]}"))
+    m.add(InlineKeyboardButton("🏠  Back", callback_data="menu_back"))
+    bot.send_message(chat_id, "☀️ *Choose your zodiac sign:*", parse_mode="Markdown", reply_markup=m)
+
+@bot.callback_query_handler(func=lambda c: c.data.startswith("horo_"))
+def cb_horoscope(call):
+    sign = call.data[5:]
+    bot.answer_callback_query(call.id)
+    fortunes = [
+        "🌟 Great energy surrounds you today. Take bold action!",
+        "🔮 A mysterious opportunity will present itself soon.",
+        "⚡ Your hacker instincts are sharp — trust them.",
+        "💀 The digital world bows to your skills today.",
+        "🌙 Patience is your superpower. The code will compile.",
+        "🎯 Focus on one goal and you'll achieve the impossible.",
+        "🛡️ Your defenses are strong. Nothing can breach you.",
+        "💡 A brilliant idea will strike you like a zero-day exploit.",
+        "🚀 Level up today — new skills await you.",
+        "🌐 The network is in your favor. Connect and conquer.",
+    ]
+    moods = ["Focused 🎯", "Energized ⚡", "Mysterious 🔮", "Powerful 💀", "Creative 💡"]
+    lucky = [f"0x{random.randint(0,255):02X}", str(random.randint(1,99)), random.choice(["7","13","42","1337","404"])]
+    msg = (
+        f"☀️ *{sign} Horoscope*\n"
+        f"━━━━━━━━━━━━━━━━━━\n\n"
+        f"🔮 *Today's Message:*\n_{random.choice(fortunes)}_\n\n"
+        f"😊 *Mood:* {random.choice(moods)}\n"
+        f"🍀 *Lucky Number:* `{random.choice(lucky)}`\n"
+        f"🎨 *Lucky Color:* `#{random.randint(0,0xFFFFFF):06X}`\n"
+        f"⚡ *Power Level:* `{'█' * random.randint(5,10)}` {random.randint(70,100)}%\n\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"🔰 {hk('voidxdownloder')}"
+    )
+    bot.send_message(call.message.chat.id, msg, parse_mode="Markdown")
+
+def send_uptime(chat_id):
+    elapsed = int(time.time() - BOT_START_TIME)
+    h, rem = divmod(elapsed, 3600)
+    m, s = divmod(rem, 60)
+    msg = (
+        "```\n╔══════════════════════════╗\n"
+        "║  ⏱️  BOT UPTIME STATUS   ║\n"
+        "╚══════════════════════════╝\n```\n"
+        f"🤖 Bot: *{hk('voidxdownloder')}*\n"
+        f"⏱️ Uptime: `{h}h {m}m {s}s`\n"
+        f"🟢 Status: `Online & Running`\n"
+        f"👥 Total Users: `{admin_data['user_count']}`\n"
+        f"🚫 Banned Users: `{len(admin_data['banned_users'])}`\n"
+        f"🕐 Started: `{datetime.utcfromtimestamp(BOT_START_TIME).strftime('%Y-%m-%d %H:%M UTC')}`"
+    )
+    bot.send_message(chat_id, msg, parse_mode="Markdown")
+
+def send_sysinfo(chat_id):
+    try:
+        import platform
+        msg = (
+            "```\n╔══════════════════════════╗\n"
+            "║  🖥️  SYSTEM INFORMATION  ║\n"
+            "╚══════════════════════════╝\n```\n"
+            f"🖥️ OS: `{platform.system()} {platform.release()}`\n"
+            f"🐍 Python: `{platform.python_version()}`\n"
+            f"💻 Machine: `{platform.machine()}`\n"
+            f"🌐 Node: `{platform.node()[:20]}`\n"
+            f"⚙️ Processor: `{platform.processor()[:30] or 'Unknown'}`\n"
+            f"🕐 UTC Time: `{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}`"
+        )
+        bot.send_message(chat_id, msg, parse_mode="Markdown")
+    except Exception as e:
+        bot.send_message(chat_id, f"❌ Error: `{e}`", parse_mode="Markdown")
+
+def send_bot_stats(chat_id):
+    elapsed = int(time.time() - BOT_START_TIME)
+    h, rem = divmod(elapsed, 3600)
+    m_t, s = divmod(rem, 60)
+    msg = (
+        "```\n╔══════════════════════════╗\n"
+        "║  📊  BOT STATISTICS      ║\n"
+        "╚══════════════════════════╝\n```\n"
+        f"🤖 *{hk('voidxdownloder')}*\n"
+        f"👑 Owner: *{hk(OWNER)}*\n\n"
+        f"👥 Total Users: `{admin_data['user_count']}`\n"
+        f"🚫 Banned: `{len(admin_data['banned_users'])}`\n"
+        f"⏱️ Uptime: `{h}h {m_t}m {s}s`\n"
+        f"🟢 Status: `Online`\n"
+        f"⚡ Version: `v3.0 DARK HACKER`\n"
+        f"📡 Tools: `25+`\n"
+        f"📥 Platforms: `6`\n\n"
+        f"📢 Channel: @HACKERQUEEN9\n"
+        f"⚡ POWERED BY DARK HACKER ZONE"
+    )
+    m = InlineKeyboardMarkup()
+    m.add(InlineKeyboardButton("🏠  Back to Main Menu", callback_data="menu_back"))
+    bot.send_message(chat_id, msg, parse_mode="Markdown", reply_markup=m)
 
 # ─────────────────────────────────────────────────────────
 #  UTILITY TOOLS  MENU
@@ -1155,6 +1420,359 @@ def qr_cmd(message):
     text = parts[1].strip()
     qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=400x400&data={requests.utils.quote(text)}"
     bot.send_photo(message.chat.id, qr_url, caption=f"📱 *QR Code*\n\n`{text[:100]}`", parse_mode="Markdown")
+
+# ─────────────────────────────────────────────────────────
+#  CIPHER  COMMANDS
+# ─────────────────────────────────────────────────────────
+@bot.message_handler(commands=['rot13'])
+def rot13_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/rot13 <text>`", parse_mode="Markdown"); return
+    text = parts[1].strip()
+    result = ''.join(
+        chr((ord(c) - 65 + 13) % 26 + 65) if c.isupper()
+        else chr((ord(c) - 97 + 13) % 26 + 97) if c.islower()
+        else c for c in text
+    )
+    bot.reply_to(message,
+        f"🔁 *ROT13 Result*\n\n"
+        f"📝 Input: `{text}`\n"
+        f"🔐 Output: `{result}`\n\n"
+        f"_Apply again to decode!_",
+        parse_mode="Markdown"
+    )
+
+@bot.message_handler(commands=['caesar'])
+def caesar_cmd(message):
+    parts = message.text.split(' ', 2)
+    if len(parts) < 3:
+        bot.reply_to(message, "Usage: `/caesar <shift> <text>`\nExample: `/caesar 3 hello`", parse_mode="Markdown"); return
+    try:
+        shift = int(parts[1]) % 26
+        text = parts[2]
+        result = ''.join(
+            chr((ord(c) - 65 + shift) % 26 + 65) if c.isupper()
+            else chr((ord(c) - 97 + shift) % 26 + 97) if c.islower()
+            else c for c in text
+        )
+        bot.reply_to(message,
+            f"🏛️ *Caesar Cipher*\n\n"
+            f"📝 Input: `{text}`\n"
+            f"🔢 Shift: `{shift}`\n"
+            f"🔐 Encoded: `{result}`\n\n"
+            f"_Use shift {26-shift} to decode!_",
+            parse_mode="Markdown"
+        )
+    except:
+        bot.reply_to(message, "❌ Invalid shift value. Use a number.")
+
+@bot.message_handler(commands=['atbash'])
+def atbash_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/atbash <text>`", parse_mode="Markdown"); return
+    text = parts[1].strip()
+    result = ''.join(
+        chr(90 - (ord(c) - 65)) if c.isupper()
+        else chr(122 - (ord(c) - 97)) if c.islower()
+        else c for c in text
+    )
+    bot.reply_to(message,
+        f"🔤 *Atbash Cipher*\n\n"
+        f"📝 Input: `{text}`\n"
+        f"🔐 Output: `{result}`\n\n"
+        f"_A↔Z, B↔Y, C↔X... Symmetric!_",
+        parse_mode="Markdown"
+    )
+
+@bot.message_handler(commands=['vigenere'])
+def vigenere_cmd(message):
+    parts = message.text.split(' ', 2)
+    if len(parts) < 3:
+        bot.reply_to(message, "Usage: `/vigenere <key> <text>`\nExample: `/vigenere secret hello`", parse_mode="Markdown"); return
+    key = parts[1].lower()
+    text = parts[2]
+    result = []
+    ki = 0
+    for c in text:
+        if c.isalpha():
+            shift = ord(key[ki % len(key)]) - 97
+            base = 65 if c.isupper() else 97
+            result.append(chr((ord(c) - base + shift) % 26 + base))
+            ki += 1
+        else:
+            result.append(c)
+    bot.reply_to(message,
+        f"🌿 *Vigenere Cipher*\n\n"
+        f"🔑 Key: `{key}`\n"
+        f"📝 Input: `{text}`\n"
+        f"🔐 Encoded: `{''.join(result)}`",
+        parse_mode="Markdown"
+    )
+
+@bot.message_handler(commands=['xor'])
+def xor_cmd(message):
+    parts = message.text.split(' ', 2)
+    if len(parts) < 3:
+        bot.reply_to(message, "Usage: `/xor <key_number> <text>`\nExample: `/xor 42 hello`", parse_mode="Markdown"); return
+    try:
+        key = int(parts[1]) % 256
+        text = parts[2]
+        result = ''.join(chr(ord(c) ^ key) for c in text)
+        hex_out = ' '.join(f'{ord(c):02X}' for c in result)
+        bot.reply_to(message,
+            f"⚡ *XOR Cipher*\n\n"
+            f"🔑 Key: `{key}` (0x{key:02X})\n"
+            f"📝 Input: `{text}`\n"
+            f"🔐 Hex Output: `{hex_out[:200]}`\n\n"
+            f"_Apply same key to decode!_",
+            parse_mode="Markdown"
+        )
+    except:
+        bot.reply_to(message, "❌ Key must be a number (0-255).")
+
+@bot.message_handler(commands=['base32'])
+def base32_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/base32 <text>`", parse_mode="Markdown"); return
+    import base64 as b64
+    encoded = b64.b32encode(parts[1].strip().encode()).decode()
+    bot.reply_to(message, f"💠 *Base32 Encoded:*\n\n`{encoded}`", parse_mode="Markdown")
+
+@bot.message_handler(commands=['urlencode'])
+def urlencode_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/urlencode <text>`", parse_mode="Markdown"); return
+    from urllib.parse import quote
+    encoded = quote(parts[1].strip())
+    bot.reply_to(message, f"📦 *URL Encoded:*\n\n`{encoded}`", parse_mode="Markdown")
+
+# ─────────────────────────────────────────────────────────
+#  PRO TOOL  COMMANDS
+# ─────────────────────────────────────────────────────────
+@bot.message_handler(commands=['strength'])
+def strength_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/strength <password>`", parse_mode="Markdown"); return
+    pwd = parts[1].strip()
+    score = 0
+    feedback = []
+    if len(pwd) >= 8: score += 1
+    else: feedback.append("▸ Use at least 8 characters")
+    if len(pwd) >= 12: score += 1
+    if any(c.isupper() for c in pwd): score += 1
+    else: feedback.append("▸ Add uppercase letters (A-Z)")
+    if any(c.islower() for c in pwd): score += 1
+    else: feedback.append("▸ Add lowercase letters (a-z)")
+    if any(c.isdigit() for c in pwd): score += 1
+    else: feedback.append("▸ Add numbers (0-9)")
+    if any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in pwd): score += 1
+    else: feedback.append("▸ Add special characters (!@#$...)")
+    if len(set(pwd)) > len(pwd) * 0.6: score += 1
+    bars = "█" * score + "░" * (7 - score)
+    levels = {0:"💀 Very Weak",1:"🔴 Weak",2:"🔴 Weak",3:"🟠 Fair",4:"🟡 Moderate",5:"🟢 Strong",6:"🟢 Strong",7:"💎 Excellent"}
+    level = levels.get(score, "Unknown")
+    tips = "\n".join(feedback) if feedback else "✅ Great password!"
+    bot.reply_to(message,
+        f"💪 *Password Strength Analyzer*\n\n"
+        f"🔑 Password: `{'*' * len(pwd)}`\n"
+        f"📏 Length: `{len(pwd)}`\n\n"
+        f"📊 Strength: `[{bars}]` {score}/7\n"
+        f"🏷️ Rating: *{level}*\n\n"
+        f"💡 *Suggestions:*\n{tips}",
+        parse_mode="Markdown"
+    )
+
+@bot.message_handler(commands=['email'])
+def email_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/email <email_address>`", parse_mode="Markdown"); return
+    email_addr = parts[1].strip()
+    pattern = r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
+    valid = bool(re.match(pattern, email_addr))
+    if valid:
+        local, domain = email_addr.split('@', 1)
+        providers = {"gmail.com":"🔵 Google","yahoo.com":"🟣 Yahoo","hotmail.com":"🔷 Microsoft",
+                     "outlook.com":"🔷 Microsoft","proton.me":"🟢 ProtonMail","icloud.com":"⚪ Apple"}
+        provider = providers.get(domain.lower(), f"🌐 {domain}")
+        msg = (
+            f"📧 *Email Validator*\n\n"
+            f"✅ *Valid Email!*\n\n"
+            f"📨 Address: `{email_addr}`\n"
+            f"👤 Local: `{local}`\n"
+            f"🌐 Domain: `{domain}`\n"
+            f"📡 Provider: {provider}"
+        )
+    else:
+        msg = f"📧 *Email Validator*\n\n❌ *Invalid Email!*\n\n`{email_addr}`\n\n_Check format: user@domain.com_"
+    bot.reply_to(message, msg, parse_mode="Markdown")
+
+@bot.message_handler(commands=['analyze'])
+def analyze_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/analyze <text>`", parse_mode="Markdown"); return
+    text = parts[1].strip()
+    words = len(text.split())
+    chars = len(text)
+    chars_no_space = len(text.replace(' ', ''))
+    sentences = len([s for s in re.split(r'[.!?]+', text) if s.strip()])
+    paragraphs = len([p for p in text.split('\n') if p.strip()])
+    reading_time = max(1, round(words / 200))
+    unique_words = len(set(w.lower().strip('.,!?') for w in text.split()))
+    bot.reply_to(message,
+        f"📝 *Text Analyzer Results*\n\n"
+        f"📊 *Statistics:*\n"
+        f"▸ Words: `{words}`\n"
+        f"▸ Characters: `{chars}`\n"
+        f"▸ Chars (no spaces): `{chars_no_space}`\n"
+        f"▸ Sentences: `{sentences}`\n"
+        f"▸ Paragraphs: `{paragraphs}`\n"
+        f"▸ Unique Words: `{unique_words}`\n\n"
+        f"⏱️ *Reading Time:* `~{reading_time} min`\n"
+        f"📖 *Avg Word Length:* `{chars_no_space//max(words,1)} chars`",
+        parse_mode="Markdown"
+    )
+
+@bot.message_handler(commands=['prime'])
+def prime_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/prime <number>`\nExample: `/prime 97`", parse_mode="Markdown"); return
+    try:
+        n = int(parts[1].strip())
+        if n < 2:
+            is_prime = False
+        elif n == 2:
+            is_prime = True
+        elif n % 2 == 0:
+            is_prime = False
+        else:
+            is_prime = all(n % i != 0 for i in range(3, int(math.sqrt(n)) + 1, 2))
+        result = "✅ *PRIME NUMBER!*" if is_prime else "❌ *NOT a prime number*"
+        factors = []
+        if not is_prime and n > 1:
+            temp = n
+            d = 2
+            while d * d <= temp:
+                while temp % d == 0:
+                    factors.append(d)
+                    temp //= d
+                d += 1
+            if temp > 1: factors.append(temp)
+        factor_str = f"\n🔢 Factors: `{' × '.join(map(str, factors))}`" if factors else ""
+        bot.reply_to(message,
+            f"🔢 *Prime Number Checker*\n\n"
+            f"Number: `{n:,}`\n"
+            f"{result}{factor_str}",
+            parse_mode="Markdown"
+        )
+    except:
+        bot.reply_to(message, "❌ Please provide a valid integer.")
+
+@bot.message_handler(commands=['factorial'])
+def factorial_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/factorial <number>`\nExample: `/factorial 10`", parse_mode="Markdown"); return
+    try:
+        n = int(parts[1].strip())
+        if n < 0:
+            bot.reply_to(message, "❌ Factorial undefined for negative numbers!"); return
+        if n > 50:
+            bot.reply_to(message, "❌ Too large! Max 50."); return
+        result = math.factorial(n)
+        bot.reply_to(message,
+            f"🧮 *Factorial Calculator*\n\n"
+            f"`{n}!` = `{result:,}`\n\n"
+            f"📏 Digits: `{len(str(result))}`",
+            parse_mode="Markdown"
+        )
+    except:
+        bot.reply_to(message, "❌ Invalid number.")
+
+@bot.message_handler(commands=['country'])
+def country_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/country <name>`\nExample: `/country Pakistan`", parse_mode="Markdown"); return
+    country = parts[1].strip()
+    try:
+        r = requests.get(f"https://restcountries.com/v3.1/name/{country}", timeout=10).json()
+        if isinstance(r, list) and len(r) > 0:
+            d = r[0]
+            name = d.get('name', {}).get('common', country)
+            capital = d.get('capital', ['N/A'])[0] if d.get('capital') else 'N/A'
+            region = d.get('region', 'N/A')
+            subregion = d.get('subregion', 'N/A')
+            population = d.get('population', 0)
+            area = d.get('area', 0)
+            currencies = ', '.join([v.get('name','') for v in d.get('currencies',{}).values()])
+            languages = ', '.join(d.get('languages',{}).values())
+            flag = d.get('flag', '')
+            bot.reply_to(message,
+                f"🌍 *Country Info: {name}* {flag}\n\n"
+                f"🏛️ Capital: `{capital}`\n"
+                f"🌐 Region: `{region}` › `{subregion}`\n"
+                f"👥 Population: `{population:,}`\n"
+                f"📐 Area: `{area:,} km²`\n"
+                f"💰 Currency: `{currencies}`\n"
+                f"🗣️ Languages: `{languages}`",
+                parse_mode="Markdown"
+            )
+        else:
+            bot.reply_to(message, "❌ Country not found.")
+    except:
+        bot.reply_to(message, "❌ Could not fetch country data.")
+
+@bot.message_handler(commands=['check'])
+def check_url_cmd(message):
+    parts = message.text.split(' ', 1)
+    if len(parts) < 2:
+        bot.reply_to(message, "Usage: `/check <url>`\nExample: `/check https://google.com`", parse_mode="Markdown"); return
+    url = parts[1].strip()
+    if not url.startswith('http'):
+        url = 'https://' + url
+    start = time.time()
+    try:
+        r = requests.get(url, timeout=10, allow_redirects=True)
+        elapsed = round((time.time() - start) * 1000, 2)
+        status = r.status_code
+        status_emoji = "✅" if status < 300 else "⚠️" if status < 400 else "❌"
+        final_url = r.url
+        content_type = r.headers.get('Content-Type', 'Unknown')[:40]
+        server = r.headers.get('Server', 'Unknown')[:30]
+        bot.reply_to(message,
+            f"🔗 *Link Checker*\n\n"
+            f"🌐 URL: `{url[:60]}`\n"
+            f"{status_emoji} Status: `{status}`\n"
+            f"⏱️ Response: `{elapsed}ms`\n"
+            f"📡 Server: `{server}`\n"
+            f"📄 Content: `{content_type}`\n"
+            f"🔀 Final URL: `{final_url[:60]}`",
+            parse_mode="Markdown"
+        )
+    except requests.exceptions.ConnectionError:
+        bot.reply_to(message, f"🔗 *Link Checker*\n\n❌ *DEAD LINK!*\n\n`{url}`\n\nHost unreachable.", parse_mode="Markdown")
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error: `{str(e)[:100]}`", parse_mode="Markdown")
+
+@bot.message_handler(commands=['uptime'])
+def uptime_cmd(message):
+    send_uptime(message.chat.id)
+
+@bot.message_handler(commands=['sysinfo'])
+def sysinfo_cmd(message):
+    send_sysinfo(message.chat.id)
+
+@bot.message_handler(commands=['botstats'])
+def botstats_cmd(message):
+    send_bot_stats(message.chat.id)
 
 # ─────────────────────────────────────────────────────────
 #  ADMIN  PANEL
