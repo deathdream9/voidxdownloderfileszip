@@ -1995,5 +1995,129 @@ def run_bot():
 if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
     run_bot()
-   
-bot.infinity_polling()
+   # ─────────────────────────────────────────────────────────
+#  HORROR WISH COMMAND
+# ─────────────────────────────────────────────────────────
+
+wishes = [
+    "💰 Unlimited Money",
+    "❤️ True Love",
+    "👑 Unlimited Power",
+    "🏎 Dream Car",
+    "🏠 Luxury House",
+    "🌍 World Control",
+    "🔥 Dark Powers",
+]
+
+danger_lines = [
+    "⚠️ Something entered your room...",
+    "👁 Someone is watching you right now.",
+    "🕯 The darkness accepted your soul.",
+    "☠️ Your fate has been written.",
+    "📿 There is no escape now.",
+]
+
+@bot.message_handler(commands=['wish'])
+def horror_wish(message):
+
+    user = message.from_user.first_name
+    wish = random.choice(wishes)
+
+    days = random.randint(1, 5000)
+    death_date = datetime.now() + timedelta(days=days)
+
+    msg = bot.reply_to(
+        message,
+        "🔮 Summoning Dark Spirits..."
+    )
+
+    time.sleep(2)
+
+    bot.edit_message_text(
+        "🕯 Reading Your Soul...",
+        message.chat.id,
+        msg.message_id
+    )
+
+    time.sleep(2)
+
+    final_text = f"""
+☠️ THE CURSED WISH CONTRACT ☠️
+
+👤 User: {user}
+
+🎁 Your Wish:
+{wish}
+
+🩸 Your wish WILL be granted...
+
+BUT...
+
+⚰️ Remaining life:
+{days} days
+
+📅 Death Date:
+{death_date.strftime('%d %B %Y')}
+
+{random.choice(danger_lines)}
+
+███████████ 99%
+
+☠️ There Is No Escape...
+"""
+
+    markup = InlineKeyboardMarkup()
+
+    b1 = InlineKeyboardButton(
+        "☠️ Accept Contract",
+        callback_data="accept"
+    )
+
+    b2 = InlineKeyboardButton(
+        "🏃 Escape",
+        callback_data="escape"
+    )
+
+    b3 = InlineKeyboardButton(
+        "👁 Dark Secret",
+        callback_data="secret"
+    )
+
+    markup.row(b1, b2)
+    markup.row(b3)
+
+    bot.edit_message_text(
+        final_text,
+        message.chat.id,
+        msg.message_id,
+        reply_markup=markup
+    )
+
+# ─────────────────────────────────────────────────────────
+#  HORROR CALLBACKS
+# ─────────────────────────────────────────────────────────
+
+@bot.callback_query_handler(func=lambda call: call.data in ["accept", "escape", "secret"])
+def horror_callback(call):
+
+    if call.data == "accept":
+
+        bot.send_message(
+            call.message.chat.id,
+            "☠️ CONTRACT ACCEPTED...\n🩸 Your soul belongs to darkness now."
+        )
+
+    elif call.data == "escape":
+
+        bot.send_message(
+            call.message.chat.id,
+            "🏃 You escaped... but death remembers you."
+        )
+
+    elif call.data == "secret":
+
+        bot.send_message(
+            call.message.chat.id,
+            "👁 Never look behind you at 3 AM..."
+        )
+bot.infinity_polling(skip_pending=True)
