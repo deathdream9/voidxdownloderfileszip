@@ -1994,8 +1994,5 @@ def run_bot():
 
 if __name__ == "__main__":
     threading.Thread(target=run_flask, daemon=True).start()
-    run_bot()
-   @bot.message_handler(commands=['wish'])
-def wish(message):
-    bot.reply_to(message, "👻 Horror Wish Command Working!")
-bot.infinity_polling(skip_pending=True)
+  
+bot.infinity_polling ()
